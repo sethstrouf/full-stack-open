@@ -10,7 +10,7 @@ function ShowCountry({ country }) {
       .then(returnedCountry => {
         setFullCountry(returnedCountry)
       })
-  }, [])
+  }, [country])
 
   return (
     <div>
