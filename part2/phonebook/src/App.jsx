@@ -10,7 +10,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [successMessage, setSuccessMessage] = useState(null)
+  const [notificationMessage, setNotificationMessage] = useState(null)
+  const [notificationType, setNotificationType] = useState(null)
 
   useEffect(() => {
     personService
@@ -50,9 +51,11 @@ const App = () => {
         setPersons(persons.concat(returnedPerson))
         setNewName('')
         setNewNumber('')
-        setSuccessMessage(`Added ${returnedPerson.name}`)
+        setNotificationMessage(`Added ${returnedPerson.name}`)
+        setNotificationType('success')
         setTimeout(() => {
-          setSuccessMessage(null)
+          setNotificationMessage(null)
+          setNotificationType(null)
         }, 5000)
       })
   }
@@ -63,9 +66,19 @@ const App = () => {
       .then(returnedPerson => {
         setPersons(persons.map(person => person.id !== updatedPerson.id ? person : returnedPerson))
         setNewNumber('')
-        setSuccessMessage(`Updated ${returnedPerson.name}`)
+        setNotificationMessage(`Updated ${returnedPerson.name}`)
+        setNotificationType('success')
         setTimeout(() => {
-          setSuccessMessage(null)
+          setNotificationMessage(null)
+          setNotificationType(null)
+        }, 5000)
+      })
+      .catch(error => {
+        setNotificationMessage(`Information of ${newName} has already been removed from server`)
+        setNotificationType('error')
+        setTimeout(() => {
+          setNotificationMessage(null)
+          setNotificationType(null)
         }, 5000)
       })
   }
@@ -79,9 +92,11 @@ const App = () => {
         .then(returnedPerson => {
           const newPersons = persons.filter(person => person.id !== returnedPerson.id)
           setPersons(newPersons)
-          setSuccessMessage(`Deleted ${returnedPerson.name}`)
+          setNotificationMessage(`Deleted ${returnedPerson.name}`)
+          setNotificationType('success')
           setTimeout(() => {
-            setSuccessMessage(null)
+            setNotificationMessage(null)
+            setNotificationType(null)
           }, 5000)
         })
     }
@@ -95,7 +110,7 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
 
-      <Notification message={successMessage} />
+      <Notification notificationType={notificationType} message={notificationMessage} />
 
       <Filter searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
