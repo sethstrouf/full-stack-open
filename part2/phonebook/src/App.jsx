@@ -58,6 +58,11 @@ const App = () => {
           setNotificationType(null)
         }, 5000)
       })
+      .catch(error => {
+        console.error(error)
+        setNotificationMessage(error.response.data.error)
+        setNotificationType('error')
+      })
   }
 
   const updatePerson = (updatedPerson) => {
@@ -74,6 +79,7 @@ const App = () => {
         }, 5000)
       })
       .catch(error => {
+        console.error(error)
         setNotificationMessage(`Information of ${newName} has already been removed from server`)
         setNotificationType('error')
         setTimeout(() => {
