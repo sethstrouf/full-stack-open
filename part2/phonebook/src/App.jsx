@@ -80,7 +80,7 @@ const App = () => {
       })
       .catch(error => {
         console.error(error)
-        setNotificationMessage(`Information of ${newName} has already been removed from server`)
+        setNotificationMessage(error.response.data.error)
         setNotificationType('error')
         setTimeout(() => {
           setNotificationMessage(null)
