@@ -51,6 +51,27 @@ test('unique identifer of a blog is called id', async () => {
   assert.strictEqual(blogKeys.includes('id'), true)
 })
 
+test('a valid blog can be added ', async () => {
+  const newBlog = {
+    title: 'Newest Blog',
+    author: 'New Author',
+    url: 'http://example.com',
+    likes: 23,
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  const blogsAtEnd = await Blog.find({})
+  assert.strictEqual(blogsAtEnd.length, initialBlogs.length + 1)
+
+  const titles = blogsAtEnd.map(blog => blog.title)
+  assert(titles.includes('Newest Blog'))
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
