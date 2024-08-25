@@ -51,7 +51,7 @@ test('unique identifer of a blog is called id', async () => {
   assert.strictEqual(blogKeys.includes('id'), true)
 })
 
-test('a valid blog can be added ', async () => {
+test('a valid blog can be added', async () => {
   const newBlog = {
     title: 'Newest Blog',
     author: 'New Author',
@@ -70,6 +70,22 @@ test('a valid blog can be added ', async () => {
 
   const titles = blogsAtEnd.map(blog => blog.title)
   assert(titles.includes('Newest Blog'))
+})
+
+test.only('likes property defaults to 0', async () => {
+  const newBlog = {
+    title: 'Newest Blog',
+    author: 'New Author',
+    url: 'http://example.com'
+  }
+
+  const savedBlog = await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(savedBlog.body.likes, 0)
 })
 
 after(async () => {
