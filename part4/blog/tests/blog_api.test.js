@@ -72,7 +72,7 @@ test('a valid blog can be added', async () => {
   assert(titles.includes('Newest Blog'))
 })
 
-test.only('likes property defaults to 0', async () => {
+test('likes property defaults to 0', async () => {
   const newBlog = {
     title: 'Newest Blog',
     author: 'New Author',
@@ -86,6 +86,30 @@ test.only('likes property defaults to 0', async () => {
     .expect('Content-Type', /application\/json/)
 
   assert.strictEqual(savedBlog.body.likes, 0)
+})
+
+test('returns 400 if title is missing', async () => {
+  const newBlog = {
+    author: 'New Author',
+    url: 'http://example.com'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
+})
+
+test('returns 400 if url is missing', async () => {
+  const newBlog = {
+    title: 'Newest Blog',
+    author: 'New Author'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
 })
 
 after(async () => {
