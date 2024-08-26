@@ -112,6 +112,29 @@ test('returns 400 if url is missing', async () => {
     .expect(400)
 })
 
+describe('updating a blog', () => {
+  test('succeeds with status code 200 if id is valid', async () => {
+    const blogs = await Blog.find({})
+    const blogsAtStart = blogs.map(blog => blog.toJSON())
+    const blogToUpdate = blogsAtStart[0]
+
+    const updatedBlog = {
+      title: blogToUpdate.title,
+      author: blogToUpdate.author,
+      url: blogToUpdate.url,
+      likes: blogToUpdate.likes + 10,
+    }
+
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send(updatedBlog)
+      .expect(200)
+
+    const blogAfterUpdate = await Blog.findById(blogToUpdate.id)
+    assert(blogAfterUpdate.likes, blogToUpdate + 10)
+  })
+})
+
 describe('deletion of a blog', () => {
   test('succeeds with status code 204 if id is valid', async () => {
     const blogs = await Blog.find({})
