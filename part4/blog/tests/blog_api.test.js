@@ -1,4 +1,4 @@
-const { test, after, beforeEach } = require('node:test')
+const { test, describe, after, beforeEach } = require('node:test')
 const assert = require('node:assert')
 const Blog = require('../models/blog')
 const mongoose = require('mongoose')
@@ -110,6 +110,25 @@ test('returns 400 if url is missing', async () => {
     .post('/api/blogs')
     .send(newBlog)
     .expect(400)
+})
+
+describe('deletion of a blog', () => {
+  test('succeeds with status code 204 if id is valid', async () => {
+    const blogs = await Blog.find({})
+    const blogsAtStart = blogs.map(blog => blog.toJSON())
+    const blogToDelete = blogsAtStart[0]
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(204)
+
+    const blogsAtEnd = await Blog.find({})
+
+    assert.strictEqual(blogsAtEnd.length, initialBlogs.length - 1)
+
+    const titles = blogsAtEnd.map(blog => blog.title)
+    assert(!titles.includes(blogToDelete.title))
+  })
 })
 
 after(async () => {
