@@ -1,6 +1,9 @@
 const { test, describe, after, beforeEach } = require('node:test')
 const assert = require('node:assert')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
@@ -26,8 +29,31 @@ const initialBlogs = [
   }
 ]
 
+const createUser = async () => {
+  const saltRounds = 10
+  const passwordHash = await bcrypt.hash('password', saltRounds)
+
+  const user = new User({
+    username: 'testUser',
+    name: 'Test User',
+    passwordHash
+  })
+
+  return await user.save()
+}
+
+const getUserToken = (user) => {
+  const userForToken = {
+    username: user.username,
+    id: user._id,
+  }
+
+  return jwt.sign(userForToken, process.env.SECRET)
+}
+
 beforeEach(async () => {
   await Blog.deleteMany({})
+  await User.deleteMany({})
   await Blog.insertMany(initialBlogs)
 })
 
@@ -52,6 +78,9 @@ test('unique identifer of a blog is called id', async () => {
 })
 
 test('a valid blog can be added', async () => {
+  const user = await createUser()
+  const token = getUserToken(user)
+
   const newBlog = {
     title: 'Newest Blog',
     author: 'New Author',
@@ -62,6 +91,7 @@ test('a valid blog can be added', async () => {
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set({ Authorization: `Bearer ${token}` })
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
@@ -73,6 +103,9 @@ test('a valid blog can be added', async () => {
 })
 
 test('likes property defaults to 0', async () => {
+  const user = await createUser()
+  const token = getUserToken(user)
+
   const newBlog = {
     title: 'Newest Blog',
     author: 'New Author',
@@ -82,6 +115,7 @@ test('likes property defaults to 0', async () => {
   const savedBlog = await api
     .post('/api/blogs')
     .send(newBlog)
+    .set({ Authorization: `Bearer ${token}` })
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
@@ -89,6 +123,9 @@ test('likes property defaults to 0', async () => {
 })
 
 test('returns 400 if title is missing', async () => {
+  const user = await createUser()
+  const token = getUserToken(user)
+
   const newBlog = {
     author: 'New Author',
     url: 'http://example.com'
@@ -97,10 +134,14 @@ test('returns 400 if title is missing', async () => {
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set({ Authorization: `Bearer ${token}` })
     .expect(400)
 })
 
 test('returns 400 if url is missing', async () => {
+  const user = await createUser()
+  const token = getUserToken(user)
+
   const newBlog = {
     title: 'Newest Blog',
     author: 'New Author'
@@ -109,7 +150,21 @@ test('returns 400 if url is missing', async () => {
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set({ Authorization: `Bearer ${token}` })
     .expect(400)
+})
+
+test('returns 401 if no token provided', async () => {
+  const newBlog = {
+    title: 'Newest Blog',
+    author: 'New Author',
+    url: 'http://example.com'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(401)
 })
 
 describe('updating a blog', () => {
@@ -137,17 +192,24 @@ describe('updating a blog', () => {
 
 describe('deletion of a blog', () => {
   test('succeeds with status code 204 if id is valid', async () => {
-    const blogs = await Blog.find({})
-    const blogsAtStart = blogs.map(blog => blog.toJSON())
-    const blogToDelete = blogsAtStart[0]
+    const user = await createUser()
+    const token = getUserToken(user)
+
+    const newBlog = new Blog({
+      title: 'Newest Blog',
+      author: 'New Author',
+      url: 'http://example.com',
+      user: user.id
+    })
+
+    const blogToDelete = await newBlog.save()
 
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set({ Authorization: `Bearer ${token}` })
       .expect(204)
 
     const blogsAtEnd = await Blog.find({})
-
-    assert.strictEqual(blogsAtEnd.length, initialBlogs.length - 1)
 
     const titles = blogsAtEnd.map(blog => blog.title)
     assert(!titles.includes(blogToDelete.title))
