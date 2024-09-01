@@ -5,6 +5,9 @@ import loginService from './services/login'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
+  const [title, setTitle] = useState([''])
+  const [author, setAuthor] = useState([''])
+  const [url, setUrl] = useState([''])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
@@ -33,6 +36,7 @@ const App = () => {
 
       window.localStorage.setItem('loggedBlogappuser', JSON.stringify(user))
 
+      blogService.setToken(user.token)
       setUser(user)
       setUsername('')
       setPassword('')
@@ -45,6 +49,49 @@ const App = () => {
     setUser(null)
     window.localStorage.removeItem('loggedBlogappuser')
   }
+
+  const addBlog = e => {
+    e.preventDefault()
+
+    const blogObject = {
+      title: title,
+      author: author,
+      url: url
+    }
+
+    blogService
+      .create(blogObject)
+        .then(returnedBlog => {
+        setBlogs(blogs.concat(returnedBlog))
+        setTitle('')
+        setAuthor('')
+        setUrl('')
+      })
+  }
+
+  const blogForm = () => (
+    <form onSubmit={addBlog}>
+      Title
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+      />
+      <br />
+      Author
+      <input
+        value={author}
+        onChange={e => setAuthor(e.target.value)}
+      />
+      <br />
+      URL
+      <input
+        value={url}
+        onChange={e => setUrl(e.target.value)}
+      />
+      <br />
+      <button type="submit">Create</button>
+    </form>
+  )
 
   if (user === null) {
     return (
@@ -83,6 +130,11 @@ const App = () => {
         <button onClick={handleLogout}>Logout</button>
       </div>
       <br />
+
+      <h2>Create New</h2>
+      {blogForm()}
+      <br />
+
       {blogs.map(blog =>
         <Blog key={blog.id} blog={blog} />
       )}
